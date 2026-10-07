@@ -84,7 +84,7 @@ window.NewspeakTranslator = (() => {
   function nextWordIndex(tokens, index) {
     let cursor = index + 1;
     while (cursor < tokens.length && /^\s+$/.test(tokens[cursor])) cursor++;
-    return cursor < tokens.length && /^[A-Za-z]+$/.test(tokens[cursor]) ? cursor : -1;
+    return cursor < tokens.length && /^[\p{L}\p{M}]+$/u.test(tokens[cursor]) ? cursor : -1;
   }
 
   function nextPredicateIndex(tokens, index) {
@@ -108,8 +108,8 @@ window.NewspeakTranslator = (() => {
 
   function translate(raw, direction) {
     if (!raw.trim()) return {text: "NO INPUT RECEIVED.", unresolved: []};
-    const tokens = raw.split(/(\s+|[.,!?;:\"'()])/).filter(token => token !== "");
-    const isWord = token => /^[A-Za-z]+$/.test(token);
+    const tokens = raw.match(/[\p{L}\p{M}]+|\s+|[^\p{L}\p{M}\s]/gu) || [];
+    const isWord = token => /^[\p{L}\p{M}]+$/u.test(token);
     const unresolved = [];
 
     if (direction === "toNS") {

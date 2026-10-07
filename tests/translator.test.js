@@ -42,6 +42,14 @@ test("translates Big Brother as the Newspeak abbreviation", () => {
   assert.equal(result.unresolved.length, 0);
 });
 
+test("preserves typographic punctuation while matching nearby phrases", () => {
+  const result = translator.translate("Big Brother—privacy", "toNS");
+
+  assert.match(result.text, /^BB—privacy\n/);
+  assert.equal(result.unresolved.length, 1);
+  assert.equal(result.unresolved[0], "privacy");
+});
+
 test("translates the sample sentence as compact Newspeak phrases", () => {
   const result = translator.translate(
     "i love english socialism, big brother protects me, i love big brother, i am a good party member, i do not commit thought crimes",
