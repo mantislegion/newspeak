@@ -2,14 +2,7 @@
   "name": "newspeak-quick-dictionary",
   "version": "1.0.0",
   "private": true,
-  "engines": {
-    "node": "22.x"
-  },
   "scripts": {
     "test": "node --test"
-  },
-  "dependencies": {
-    "@openrouter/sdk": "^1.4.25",
-    "zod": "latest"
   }
 }
