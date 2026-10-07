@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEWSPEAK QUICK DICTIONARY - Ministry of Truth Reference Terminal</title>
+<style>
+  body {
+    font-family: "Courier New", Courier, monospace;
+    background: #d9d2b8;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 0;
+  }
+  #topbar {
+    background: #8b0000;
+    color: #f4e9c1;
+    text-align: center;
+    padding: 6px;
+    font-weight: bold;
+    border-bottom: 3px double #000;
+    letter-spacing: 2px;
+  }
+  #wrap {
+    width: 760px;
+    max-width: 96%;
+    margin: 16px auto;
+    background: #efe6c8;
+    border: 3px outset #6b5d3a;
+    padding: 0;
+  }
+  #header {
+    background: #1a1a1a;
+    color: #f4e9c1;
+    padding: 14px;
+    text-align: center;
+    border-bottom: 2px solid #8b0000;
+  }
+  #header h1 {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 30px;
+    margin: 0;
+    letter-spacing: 4px;
+  }
+  #header p {
+    margin: 6px 0 0 0;
+    font-size: 12px;
+  }
+  #slogan {
+    font-family: "Times New Roman", Times, serif;
+    font-style: italic;
+    font-weight: bold;
+    color: #ff6b6b;
+    font-size: 16px;
+    margin-top: 8px !important;
+  }
+  .section {
+    padding: 14px 18px;
+    border-bottom: 1px dashed #6b5d3a;
+  }
+  h2 {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 18px;
+    border-bottom: 2px solid #8b0000;
+    margin: 0 0 10px 0;
+    padding-bottom: 3px;
+    color: #8b0000;
+    text-transform: uppercase;
+  }
+  .nav a {
+    color: #00004d;
+    font-weight: bold;
+    margin-right: 10px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .nav a.active {
+    color: #8b0000;
+    text-decoration: none;
+  }
+  input[type=text], select, textarea {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+    background: #fbf6e2;
+    border: 2px inset #6b5d3a;
+    padding: 4px;
+    box-sizing: border-box;
+  }
+  #searchbox { width: 70%; }
+  #direction { width: 26%; }
+  textarea { width: 100%; height: 90px; }
+  button {
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+    background: #c9bd94;
+    border: 2px outset #6b5d3a;
+    padding: 4px 12px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  button:active { border-style: inset; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: #fbf6e2;
+  }
+  th, td {
+    border: 1px solid #6b5d3a;
+    padding: 5px 7px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #1a1a1a;
+    color: #f4e9c1;
+  }
+  .nsword {
+    font-weight: bold;
+    color: #8b0000;
+  }
+  .hl { background: #ffe066; }
+  #resultcount, .small { font-size: 12px; color: #444; }
+  #output {
+    background: #fbf6e2;
+    border: 2px inset #6b5d3a;
+    padding: 10px;
+    min-height: 40px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+    font-size: 14px;
+  }
+  .rule {
+    margin: 6px 0;
+    font-size: 13px;
+  }
+  .rule b { color: #8b0000; }
+  .blink { color: #8b0000; font-weight: bold; }
+  #footer {
+    text-align: center;
+    font-size: 11px;
+    padding: 10px;
+    background: #1a1a1a;
+    color: #aaa;
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="topbar">*** MINISTRY OF TRUTH - REFERENCE TERMINAL - OCEANIA ***</div>
+
+<div id="wrap">
+
+  <div id="header">
+    <h1>NEWSPEAK QUICK DICTIONARY</h1>
+    <p>Official Language of Oceania - Authorized Edition</p>
+    <p id="slogan">WAR IS PEACE &middot; FREEDOM IS SLAVERY &middot; IGNORANCE IS STRENGTH</p>
+  </div>
+
+  <div class="section nav">
+    <a id="nav-lookup" class="active" onclick="showTab('lookup')">[1] LOOKUP</a>
+    <a id="nav-translate" onclick="showTab('translate')">[2] TRANSLATOR</a>
+    <a id="nav-rules" onclick="showTab('rules')">[3] WORD-FORMATION RULES</a>
+    <a id="nav-about" onclick="showTab('about')">[4] NOTICE</a>
+  </div>
+
+  <!-- LOOKUP TAB -->
+  <div id="tab-lookup" class="section">
+    <h2>Word Lookup</h2>
+    <p class="small">Search Newspeak or English. Partial matches are shown. Direction is optional.</p>
+    <input type="text" id="searchbox" placeholder="Type a word..." oninput="runSearch()">
+    <select id="direction" onchange="runSearch()">
+      <option value="both">Both directions</option>
+      <option value="ns">Newspeak only</option>
+      <option value="en">English meaning only</option>
+    </select>
+    <div id="resultcount"></div>
+    <table id="results">
+      <thead><tr><th>NEWSPEAK</th><th>ENGLISH MEANING</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- TRANSLATOR TAB -->
+  <div id="tab-translate" class="section hidden">
+    <h2>Sentence Translator</h2>
+    <p class="small">Choose a direction, then enter text. Translation is word-by-word from the reference and may need manual adjustment, as the Party intended.</p>
+    <select id="transdir">
+      <option value="toNS">English -&gt; Newspeak</option>
+      <option value="toEN">Newspeak -&gt; English</option>
+    </select>
+    <br><br>
+    <textarea id="transinput" placeholder="Enter sentence here..."></textarea>
+    <button onclick="doTranslate()">TRANSLATE</button>
+    <button onclick="document.getElementById('transinput').value='';document.getElementById('output').textContent='';">CLEAR</button>
+    <div id="output"></div>
+  </div>
+
+  <!-- RULES TAB -->
+  <div id="tab-rules" class="section hidden">
+    <h2>Word-Formation Rules</h2>
+    <div id="rulelist"></div>
+    <h2 style="margin-top:14px">Grammar Notes</h2>
+    <div class="rule">- Newspeak strongly favors short, simple words.</div>
+    <div class="rule">- A root can often function as noun, verb, adjective, or adverb.</div>
+    <div class="rule">- Irregular verbs are regularized: <b>thought &rarr; thinked</b>, <b>gave &rarr; gived</b>, <b>took &rarr; taked</b>.</div>
+    <div class="rule">- Comparatives are regular: <b>better &rarr; gooder</b>, <b>best &rarr; goodest</b>.</div>
+    <div class="rule">- <b>"whom"</b> is replaced by <b>"who"</b>. <b>"shall" / "should"</b> become <b>"will" / "would"</b>.</div>
+  </div>
+
+  <!-- ABOUT TAB -->
+  <div id="tab-about" class="section hidden">
+    <h2>Notice</h2>
+    <p>This is a practical reference for translating ordinary English into Newspeak and back. Newspeak is not a one-to-one substitution cipher. It deliberately reduces vocabulary and nuance, so many sentences must be paraphrased rather than translated word for word.</p>
+    <p>Context matters more than a rigid dictionary. Where a concept has been removed from the language, such as <b>privacy</b>, the terminal will say so.</p>
+    <p class="blink">BIG BROTHER IS WATCHING YOU.</p>
+  </div>
+
+  <div id="footer">
+    THOUGHT IS CRIME &middot; THE PARTY SEES ALL &middot; ALL RECORDS ARE PERFECT<br>
+    Compiled from Orwell's Appendix and reference material. Not an official publication.
+  </div>
+
+</div>
+
+<script>
+// ---------- DATA ----------
+const ENTRIES = [
+  {ns:"ante", en:"before"},
+  {ns:"artsem", en:"artificial insemination"},
+  {ns:"BB / Big Brother", en:"supreme leader of Oceania / Party authority"},
+  {ns:"bellyfeel", en:"blind, enthusiastic acceptance of an idea"},
+  {ns:"blackwhite", en:"accepting something as true regardless of facts; accepting contradictory Party claims as true"},
+  {ns:"crimestop", en:"stopping oneself from thinking unorthodox thoughts"},
+  {ns:"crimethink", en:"thoughtcrime; anti-Party thought"},
+  {ns:"dayorder", en:"order of the day"},
+  {ns:"dep", en:"department"},
+  {ns:"doubleplus", en:"extremely / superlatively (prefix)"},
+  {ns:"doubleplusgood", en:"excellent / fantastic / extremely good"},
+  {ns:"doubleplusungood", en:"terrible / horrible / extremely bad"},
+  {ns:"doublethink", en:"simultaneously accepting contradictory beliefs"},
+  {ns:"duckspeak", en:"automatic, unthinking political speech"},
+  {ns:"equal", en:"equal in amount/quantity; NOT equal rights/freedom"},
+  {ns:"facecrime", en:"facial expression suggesting disloyal thought"},
+  {ns:"Ficdep", en:"Fiction Department of the Ministry of Truth"},
+  {ns:"free", en:"without something; lacking/released from something, but not political or intellectual freedom"},
+  {ns:"fullwise", en:"fully / completely / totally"},
+  {ns:"goodthink", en:"politically orthodox thought"},
+  {ns:"goodsex", en:"Party-approved sex for procreation within marriage"},
+  {ns:"goodwise", en:"correctly / properly / in an orthodox manner"},
+  {ns:"Ingsoc", en:"English Socialism; Party ideology"},
+  {ns:"joycamp", en:"labor camp"},
+  {ns:"malquoted", en:"inaccurately or treasonously represented Party words"},
+  {ns:"malreported", en:"inaccurately reported / contradicting official truth"},
+  {ns:"memory hole", en:"system for destroying inconvenient records"},
+  {ns:"Miniluv", en:"Ministry of Love; law/order/compliance; Thought Police"},
+  {ns:"Minipax", en:"Ministry of Peace; war/military operations"},
+  {ns:"Miniplenty", en:"Ministry of Plenty; economic planning/rationing"},
+  {ns:"Minitrue", en:"Ministry of Truth; propaganda and historical records"},
+  {ns:"Newspeak", en:"official controlled language of Oceania"},
+  {ns:"Oceania", en:"Party superstate"},
+  {ns:"Oldspeak", en:"ordinary/standard English"},
+  {ns:"oldthink", en:"ideas from before the Party / ideologically obsolete ideas"},
+  {ns:"ownlife", en:"individualism or antisocial enjoyment of solitude"},
+  {ns:"Party", en:"ruling political organization of Oceania"},
+  {ns:"Pornosec", en:"pornography production section of Ficdep"},
+  {ns:"privacy", en:"concept removed/revoked in Newspeak"},
+  {ns:"prole", en:"proletarian / working-class person outside the Party"},
+  {ns:"prolefeed", en:"entertainment/culture supplied to the proles"},
+  {ns:"Recdep", en:"Records Department of Minitrue"},
+  {ns:"rectify", en:"alter/correct a record to fit the official version"},
+  {ns:"ref", en:"refer / reference"},
+  {ns:"sec", en:"sector"},
+  {ns:"sexcrime", en:"sex outside Party-approved rules"},
+  {ns:"speakwrite", en:"machine that converts speech to writing"},
+  {ns:"Teledep", en:"Telecommunications Department"},
+  {ns:"telescreen", en:"two-way television/surveillance device"},
+  {ns:"thinkpol / Thoughtpolice", en:"Thought Police"},
+  {ns:"thoughtcrime", en:"same basic concept as crimethink"},
+  {ns:"unperson", en:"person officially erased from history and memory"},
+  {ns:"upsub", en:"submit upward to a higher authority"},
+  {ns:"good", en:"positive / approved"},
+  {ns:"ungood", en:"bad / negative"},
+  {ns:"plusgood", en:"very good / great"},
+  {ns:"plusungood", en:"very bad"},
+  {ns:"doubleplusgood", en:"extremely good"},
+  {ns:"doubleplusungood", en:"extremely bad"},
+  {ns:"goodthinkful", en:"orthodox in thought"},
+  {ns:"goodthinking", en:"actively practicing orthodox thought"},
+  {ns:"goodthinker", en:"person who practices goodthink"},
+  {ns:"goodthinkwise", en:"in an orthodox manner"},
+  {ns:"speedful", en:"fast / quick / rapid"},
+  {ns:"unspeedful", en:"slow"},
+  {ns:"speedwise", en:"quickly"},
+  {ns:"unspeedwise", en:"slowly"},
+  {ns:"carewise", en:"carefully"}
+];
+
+// English-side entries from the "Common Transformations" section
+const TRANSFORMS = [
+  ["very good","plusgood"],["extremely good","doubleplusgood"],["great","plusgood"],
+  ["excellent","doubleplusgood"],["bad","ungood"],["very bad","plusungood"],
+  ["terrible","doubleplusungood"],["horrible","doubleplusungood"],["before","ante"],
+  ["after","post"],["completely","fullwise"],["totally","fullwise"],["fully","fullwise"],
+  ["correctly","goodwise"],["properly","goodwise"],["quickly","speedwise"],
+  ["slowly","unspeedwise"],["carefully","carewise"],["faster","speedfuler"],
+  ["fastest","speedfulest"],["thoughtcrime","crimethink"],
+  ["politically correct thought","goodthink"],["pre-Party ideas","oldthink"],
+  ["English","Oldspeak"],["labor camp","joycamp"],["working-class entertainment","prolefeed"],
+  ["surveillance TV","telescreen"],["Thought Police","thinkpol"],
+  ["submit to higher authority","upsub"],["refer to","ref"],["department","dep"],
+  ["sector","sec"],["artificial insemination","artsem"],["person erased from history","unperson"],
+  ["Ministry of Truth","Minitrue"],["Ministry of Love","Miniluv"],["Ministry of Peace","Minipax"],
+  ["Ministry of Plenty","Miniplenty"],["Records Department","Recdep"],
+  ["Fiction Department","Ficdep"],["Telecommunications Department","Teledep"],
+  ["freedom","free (only as absence, e.g. 'free of weeds')"],
+  ["equality","equal (quantity only; no political equal rights)"],
+  ["privacy","[no equivalent: concept removed]"],
+  ["independent thought","oldthink / ownlife / crimethink (context)"],
+  ["critical thinking","crimestop / crimethinkful (context)"],
+  ["whom","who"],["shall","will"],["should","would"],
+  ["better","gooder"],["best","goodest"],["thought","thinked"],
+  ["gave","gived"],["brought","bringed"],["spoke","speaked"],["took","taked"],
+  ["swam","swimmed"],["think","thinked (past) / thinking"],["run","runned"],
+  ["drink","drinked"],["steal","stealed"],["very","plus-"],["not","un-"],
+  ["good","good"],["better","gooder"],["very","plus-"],["extremely","doubleplus-"]
+];
+
+// Word-formation rules
+const RULES = [
+  ["un-", "Negates a word.", "cold -> uncold; proceed -> unproceed (do not proceed)"],
+  ["plus-", "Means 'very' or adds strong emphasis.", "good -> plusgood; ungood -> plusungood"],
+  ["doubleplus-", "Means 'extremely' or replaces a superlative.", "good -> doubleplusgood; ungood -> doubleplusungood"],
+  ["ante-", "Means 'before'.", "filing -> antefiling"],
+  ["post-", "Means 'after'.", "filing -> postfiling"],
+  ["up- / down-", "Indicates above or below a reference point, literally or figuratively.", "upsub = submit to a higher authority"],
+  ["good- / crime-", "Marks ideological correctness or incorrectness.", "goodthink = orthodox thought; crimethink = anti-orthodox thought"],
+  ["old-", "Marks things associated with the pre-Party era.", "oldspeak = English; oldthink = pre-Party ideas"],
+  ["mal-", "Marks something the Party considers inaccurate or treasonous.", "malquote, malreport"],
+  ["-ful", "Makes an adjective.", "goodthink -> goodthinkful; speed -> speedful"],
+  ["-ed", "Regular past tense.", "think -> thinked; run -> runned"],
+  ["-ing", "Present participle.", "think -> thinking; goodthink -> goodthinking"],
+  ["-er", "Comparative, or a person who performs an action.", "good -> gooder; goodthink -> goodthinker"],
+  ["-est", "Superlative.", "good -> goodest"],
+  ["-s / -es", "Regular plural.", "man -> mans; ox -> oxes; life -> lifes"],
+  ["-wise", "Forms an adverb.", "quick -> quickwise; careful -> carewise"]
+];
+
+const CONTRACTIONS = {
+  "minitrue":"Ministry of Truth","miniluv":"Ministry of Love","minipax":"Ministry of Peace",
+  "miniplenty":"Ministry of Plenty","recdep":"Records Department","ficdep":"Fiction Department",
+  "teledep":"Telecommunications Department","thinkpol":"Thought Police","thoughtpolice":"Thought Police"
+};
+
+// ---------- TABS ----------
+function showTab(name) {
+  ["lookup","translate","rules","about"].forEach(t => {
+    document.getElementById("tab-"+t).classList.toggle("hidden", t !== name);
+    document.getElementById("nav-"+t).classList.toggle("active", t === name);
+  });
+}
+
+// ---------- LOOKUP ----------
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function highlight(text, q){
+  if(!q) return escapeHtml(text);
+  const i = text.toLowerCase().indexOf(q);
+  if(i<0) return escapeHtml(text);
+  return escapeHtml(text.slice(0,i)) + '<span class="hl">' + escapeHtml(text.slice(i,i+q.length)) + '</span>' + escapeHtml(text.slice(i+q.length));
+}
+
+function runSearch(){
+  const q = document.getElementById("searchbox").value.trim().toLowerCase();
+  const dir = document.getElementById("direction").value;
+  const tbody = document.querySelector("#results tbody");
+  tbody.innerHTML = "";
+  let count = 0;
+  if(!q){
+    document.getElementById("resultcount").textContent = ENTRIES.length + " entries in reference. Type to search.";
+    ENTRIES.forEach(e => addRow(e, "", tbody)); // show all when empty? keep quiet: show list
+    return;
+  }
+  ENTRIES.forEach(e => {
+    const inNs = e.ns.toLowerCase().includes(q);
+    const inEn = e.en.toLowerCase().includes(q);
+    const ok = (dir==="both" && (inNs||inEn)) || (dir==="ns" && inNs) || (dir==="en" && inEn);
+    if(ok){ addRow(e, q, tbody); count++; }
+  });
+  // Prefix-rule hints
+  const hint = ruleHint(q);
+  if(hint) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<td colspan="2" class="small">' + hint + '</td>';
+    tbody.appendChild(tr);
+  }
+  if(count===0 && !hint){
+    tbody.innerHTML = '<tr><td colspan="2">NO RECORD FOUND. The term may not exist in Newspeak, or it may have been rectified out of existence.</td></tr>';
+  }
+  document.getElementById("resultcount").textContent = count + " match(es) found.";
+}
+
+function addRow(e, q, tbody){
+  const tr = document.createElement("tr");
+  const dir = document.getElementById("direction").value;
+  tr.innerHTML = '<td class="nsword">'+ (q?highlight(e.ns,q):escapeHtml(e.ns)) +'</td><td>'+ (q?highlight(e.en,q):escapeHtml(e.en)) +'</td>';
+  tbody.appendChild(tr);
+}
+
+function ruleHint(q){
+  // Check whether the query contains a known Newspeak prefix or suffix
+  const hits = [];
+  RULES.forEach(r => {
+    const key = r[0].replace(/ \/ /g,"|").split("|");
+    key.forEach(k => {
+      const kk = k.trim();
+      if(kk.endsWith("-") && q.startsWith(kk.slice(0,-1)) && q.length > kk.length-1) hits.push(r[0]+": "+r[1]);
+      if(kk.startsWith("-") && q.endsWith(kk.slice(1)) && q.length > kk.length-1) hits.push(r[0]+": "+r[1]);
+    });
+  });
+  if(hits.length===0) return "";
+  return "Possible affix match: " + escapeHtml(hits.slice(0,3).join("  |  "));
+}
+
+// ---------- TRANSLATOR ----------
+function doTranslate(){
+  const dir = document.getElementById("transdir").value;
+  const raw = document.getElementById("transinput").value;
+  const out = document.getElementById("output");
+  if(!raw.trim()){ out.textContent = "NO INPUT RECEIVED."; return; }
+
+  if(dir === "toNS"){
+    let text = raw;
+    // Apply multi-word transformations, longest first, case-insensitive
+    const pairs = TRANSFORMS.filter(p=>!p[1].includes("(") && !p[1].includes("[")).sort((a,b)=>b[0].length-a[0].length);
+    const flagged = [];
+    pairs.forEach(([en, ns]) => {
+      const re = new RegExp("\\b" + en.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "\\b", "gi");
+      text = text.replace(re, ns);
+    });
+    // Flag concepts that have no direct equivalent
+    TRANSFORMS.filter(p=>p[1].includes("(")||p[1].includes("[")).forEach(([en,ns])=>{
+      const re = new RegExp("\\b"+en+"\\b","i");
+      if(re.test(raw)) flagged.push('"'+en+'" -> '+ns);
+    });
+    let result = text;
+    if(flagged.length) result += "\n\n[NOTICE] Concept(s) requiring paraphrase:\n" + flagged.join("\n");
+    result += "\n\n[Note: word-by-word output. Adjust for Newspeak grammar as needed.]";
+    out.textContent = result;
+  } else {
+    let words = raw.split(/(\s+|[.,!?;:"'()])/);
+    const translated = words.map(w => {
+      const lw = w.toLowerCase();
+      if(/^\s+$|^[.,!?;:"'()]$/.test(w) || w==="") return w;
+      if(CONTRACTIONS[lw]) return CONTRACTIONS[lw];
+      const exact = ENTRIES.find(e => e.ns.toLowerCase()===lw);
+      if(exact) return exact.en;
+      // Affix decomposition
+      if(lw.startsWith("doubleplus") && lw.length>10) return "extremely " + translateStem(lw.slice(10));
+      if(lw.startsWith("plus") && lw.length>4) return "very " + translateStem(lw.slice(4));
+      if(lw.startsWith("un") && lw.length>3) return "not " + translateStem(lw.slice(2));
+      if(lw.startsWith("ante") && lw.length>4) return "before " + translateStem(lw.slice(4));
+      if(lw.startsWith("post") && lw.length>4) return "after " + translateStem(lw.slice(4));
+      if(lw.endsWith("wise") && lw.length>4) return translateStem(lw.slice(0,-4)) + " (adverb)";
+      return w;
+    });
+    out.textContent = translated.join("") + "\n\n[Note: unrecognized terms are left untouched. Context restores meaning.]";
+  }
+}
+
+function translateStem(s){
+  const hit = ENTRIES.find(e=>e.ns.toLowerCase()===s);
+  if(hit) return hit.en;
+  const g = {good:"good", ungood:"bad", think:"thinking", speed:"speed", goodthink:"orthodox thought", crime:"crime"};
+  return g[s] || s;
+}
+
+// ---------- RULES RENDER ----------
+function renderRules(){
+  const box = document.getElementById("rulelist");
+  let html = "<table><thead><tr><th>AFFIX</th><th>MEANING</th><th>EXAMPLE</th></tr></thead><tbody>";
+  RULES.forEach(r => {
+    html += "<tr><td class='nsword'>"+escapeHtml(r[0])+"</td><td>"+escapeHtml(r[1])+"</td><td>"+escapeHtml(r[2])+"</td></tr>";
+  });
+  html += "</tbody></table>";
+  box.innerHTML = html;
+}
+
+// ---------- INIT ----------
+window.onload = function(){
+  runSearch();
+  renderRules();
+};
+</script>
+
+</body>
+</html>
