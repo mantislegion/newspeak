@@ -45,7 +45,12 @@
 
   <section id="tab-translate" class="section" role="tabpanel" aria-labelledby="nav-translate" hidden>
     <h2>Sentence Translator</h2>
-    <p class="small">Choose a direction, then enter text. The engine reads from the dictionary and affix rules. Unresolved words are left in place and listed below the output.</p>
+    <p class="small">AI translation uses the reference dictionary and word-formation rules as context. Dictionary mode provides the original word-by-word result.</p>
+    <label for="transmode">Translation engine</label>
+    <select id="transmode">
+      <option value="ai">AI contextual</option>
+      <option value="reference">Dictionary reference</option>
+    </select>
     <label for="transdir">Translation direction</label>
     <select id="transdir">
       <option value="toNS">English -&gt; Newspeak</option>

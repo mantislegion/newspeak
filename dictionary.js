@@ -1,4 +1,4 @@
-window.NewspeakDictionary = (() => {
+const dictionary = (() => {
   const ENTRIES = [
     {ns:"ante", en:"before"},
     {ns:"artsem", en:"artificial insemination"},
@@ -233,3 +233,6 @@ window.NewspeakDictionary = (() => {
     NS_INDEX: indices.newspeak, EN_INDEX: indices.english
   };
 })();
+
+if (typeof module !== "undefined" && module.exports) module.exports = dictionary;
+if (typeof window !== "undefined") window.NewspeakDictionary = dictionary;

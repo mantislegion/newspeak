@@ -87,13 +87,51 @@
     box.innerHTML = "<table><thead><tr><th>AFFIX</th><th>MEANING</th><th>EXAMPLE</th></tr></thead><tbody>" + rows + "</tbody></table>";
   }
 
-  function translate() {
-    const result = window.NewspeakTranslator.translate(
-      document.getElementById("transinput").value,
-      document.getElementById("transdir").value
-    );
-    document.getElementById("output").textContent = result.text;
-    renderUnresolved(result.unresolved);
+  async function translate() {
+    const input = document.getElementById("transinput").value;
+    const direction = document.getElementById("transdir").value;
+    const mode = document.getElementById("transmode").value;
+    const output = document.getElementById("output");
+    const button = document.getElementById("translate-button");
+
+    if (!input.trim()) {
+      output.textContent = "NO INPUT RECEIVED.";
+      renderUnresolved([]);
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "TRANSLATING...";
+    output.textContent = mode === "ai" ? "CONTACTING AI GATEWAY..." : "PROCESSING REFERENCE...";
+    renderUnresolved([]);
+
+    try {
+      let result;
+      if (mode === "reference") {
+        result = window.NewspeakTranslator.translate(input, direction);
+      } else {
+        const response = await fetch("/api/translate", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({text: input, direction})
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "The translation request failed.");
+        result = payload;
+      }
+
+      if (typeof result.text !== "string" || !Array.isArray(result.unresolved)) {
+        throw new Error("The translation service returned an invalid response.");
+      }
+      output.textContent = result.text;
+      renderUnresolved(result.unresolved);
+    } catch (error) {
+      output.textContent = "TRANSLATION FAILED.\n" +
+        (error instanceof Error ? error.message : "Check the connection and try again.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "TRANSLATE";
+    }
   }
 
   function renderUnresolved(words) {

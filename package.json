@@ -1,0 +1,18 @@
+{
+  "name": "newspeak-quick-dictionary",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ai": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "vercel": "latest"
+  }
+}
