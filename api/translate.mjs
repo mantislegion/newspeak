@@ -1,4 +1,4 @@
-import {generateText, Output} from "ai";
+import {OpenRouter} from "@openrouter/sdk";
 import {z} from "zod";
 import dictionary from "../dictionary.js";
 import {createSystemPrompt, validateTranslationRequest} from "../lib/translation.mjs";
@@ -7,6 +7,19 @@ const RESPONSE_SCHEMA = z.object({
   text: z.string(),
   unresolved: z.array(z.string())
 });
+const RESPONSE_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    text: {type: "string", description: "The translated text only."},
+    unresolved: {
+      type: "array",
+      items: {type: "string"},
+      description: "Source terms that could not be faithfully translated."
+    }
+  },
+  required: ["text", "unresolved"],
+  additionalProperties: false
+};
 
 export default {
   async fetch(request) {
@@ -29,9 +42,9 @@ export default {
       return Response.json({error: validation.error}, {status: 400});
     }
 
-    if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
+    if (!process.env.OPENROUTER_API_KEY) {
       return Response.json({
-        error: "AI Gateway is not configured. Add AI_GATEWAY_API_KEY for local development."
+        error: "OpenRouter is not configured. Add OPENROUTER_API_KEY for local development."
       }, {status: 503});
     }
 
@@ -40,22 +53,45 @@ export default {
       : "Newspeak to English";
 
     try {
-      const {output} = await generateText({
-        model: process.env.AI_GATEWAY_MODEL || "openai/gpt-4o-mini",
-        output: Output.object({schema: RESPONSE_SCHEMA}),
-        instructions: createSystemPrompt(dictionary),
-        prompt: `Direction: ${direction}\n\nText to translate:\n${validation.value.text}`,
-        maxOutputTokens: 500
+      const openRouter = new OpenRouter({
+        apiKey: process.env.OPENROUTER_API_KEY,
+        appTitle: "Newspeak Quick Dictionary"
+      });
+      const response = await openRouter.chat.send({
+        chatRequest: {
+          model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+          messages: [
+            {role: "system", content: createSystemPrompt(dictionary)},
+            {role: "user", content: `Direction: ${direction}\n\nText to translate:\n${validation.value.text}`}
+          ],
+          responseFormat: {
+            type: "json_schema",
+            jsonSchema: {
+              name: "newspeak_translation",
+              strict: true,
+              schema: RESPONSE_JSON_SCHEMA
+            }
+          },
+          maxCompletionTokens: 500,
+          stream: false
+        }
       });
 
+      if (response instanceof ReadableStream) {
+        throw new Error("Unexpected streaming response");
+      }
+      const content = response.choices[0]?.message?.content;
+      if (typeof content !== "string") throw new Error("OpenRouter returned no text content");
+      const result = RESPONSE_SCHEMA.parse(JSON.parse(content));
+
       return Response.json({
-        text: output.text,
-        unresolved: [...new Set(output.unresolved)]
+        text: result.text,
+        unresolved: [...new Set(result.unresolved)]
       });
     } catch (error) {
-      console.error("AI translation failed:", error instanceof Error ? error.name : "unknown error");
+      console.error("OpenRouter translation failed:", error instanceof Error ? error.name : "unknown error");
       return Response.json({
-        error: "The AI service could not complete the translation. Check your Gateway credentials and model access."
+        error: "OpenRouter could not complete the translation. Check OPENROUTER_API_KEY, model access, and your OpenRouter credits."
       }, {status: 502});
     }
   }

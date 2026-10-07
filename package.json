@@ -9,7 +9,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "ai": "latest",
+    "@openrouter/sdk": "^1.4.25",
     "zod": "latest"
   }
 }
