@@ -66,13 +66,98 @@ window.NewspeakDictionary = (() => {
     {ns:"speedwise", en:"quickly"},
     {ns:"unspeedwise", en:"slowly"},
     {ns:"carewise", en:"carefully"},
-    {ns:"run", en:"run"},
-    {ns:"study", en:"study"},
-    {ns:"make", en:"make"},
-    {ns:"love", en:"love"},
-    {ns:"protect", en:"protect"},
-    {ns:"commit", en:"commit"},
-    {ns:"member", en:"member"}
+    {ns:"speedgo", en:"run"},
+    {ns:"learnwork", en:"study"},
+    {ns:"build", en:"make / create"},
+    {ns:"giftmake", en:"give"},
+    {ns:"herecarry", en:"bring"},
+    {ns:"handget", en:"take"},
+    {ns:"watergo", en:"swim"},
+    {ns:"unlawtake", en:"steal"},
+    {ns:"goodfeel", en:"love / affection"},
+    {ns:"safekeep", en:"protect / guard"},
+    {ns:"actdo", en:"commit / perform"},
+    {ns:"groupperson", en:"member"},
+    {ns:"human", en:"person"},
+    {ns:"malehuman", en:"man"},
+    {ns:"femalehuman", en:"woman"},
+    {ns:"bodybase", en:"foot"},
+    {ns:"mouthbone", en:"tooth"},
+    {ns:"skybird", en:"goose"},
+    {ns:"smallbeast", en:"mouse"},
+    {ns:"workbeast", en:"ox"},
+    {ns:"woolbeast", en:"sheep"},
+    {ns:"deathcounter", en:"die"},
+    {ns:"smallpest", en:"louse"},
+    {ns:"kinset", en:"family / relatives"},
+    {ns:"goodcomrade", en:"friend / companion"},
+    {ns:"glad", en:"happy / glad"},
+    {ns:"fearfeel", en:"afraid / fearful"},
+    {ns:"bigmatter", en:"important / significant"},
+    {ns:"happenstate", en:"matter / affair / situation"},
+    {ns:"knowthink", en:"knowledge"},
+    {ns:"commandforce", en:"power / authority"},
+    {ns:"bigtown", en:"city"},
+    {ns:"restplace", en:"home / house"},
+    {ns:"earthrealm", en:"world"},
+    {ns:"daycount", en:"time / duration"},
+    {ns:"sunturn", en:"day"},
+    {ns:"livestate", en:"life"},
+    {ns:"labor", en:"work / job"},
+    {ns:"eatstuff", en:"food"},
+    {ns:"drinkstuff", en:"water / drink"},
+    {ns:"youngperson", en:"child"},
+    {ns:"kinmaker", en:"parent"},
+    {ns:"kinmother", en:"mother"},
+    {ns:"kinfather", en:"father"},
+    {ns:"readslab", en:"book"},
+    {ns:"saybit", en:"word"},
+    {ns:"askthink", en:"question"},
+    {ns:"reply", en:"answer"},
+    {ns:"whycause", en:"reason"},
+    {ns:"thinkseed", en:"idea"},
+    {ns:"foreplan", en:"plan"},
+    {ns:"law", en:"law / rule"},
+    {ns:"pastmark", en:"record / document"},
+    {ns:"partyfact", en:"truth / official fact"},
+    {ns:"pastrecord", en:"history"},
+    {ns:"saytone", en:"voice"},
+    {ns:"pastthink", en:"memory / recollection"},
+    {ns:"speakset", en:"language"},
+    {ns:"learnhouse", en:"school"},
+    {ns:"knowgain", en:"learn"},
+    {ns:"mindhold", en:"know"},
+    {ns:"mindwork", en:"think"},
+    {ns:"mouthtalk", en:"say / speak"},
+    {ns:"upsay", en:"tell / report"},
+    {ns:"eyesee", en:"see"},
+    {ns:"earfeel", en:"hear"},
+    {ns:"wishfeel", en:"want / desire"},
+    {ns:"musthave", en:"need / require"},
+    {ns:"aid", en:"help / assist"},
+    {ns:"rectify", en:"change / alter"},
+    {ns:"eventcome", en:"happen / occur"},
+    {ns:"mindagree", en:"believe / accept"},
+    {ns:"pastrecall", en:"remember"},
+    {ns:"memoryhole", en:"forget / erase from memory"},
+    {ns:"inkmark", en:"write"},
+    {ns:"eyeread", en:"read"},
+    {ns:"lifehold", en:"live / exist"},
+    {ns:"move", en:"go / travel"},
+    {ns:"arrive", en:"come"},
+    {ns:"locate", en:"find"},
+    {ns:"fresh", en:"new"},
+    {ns:"pretime", en:"old / earlier"},
+    {ns:"large", en:"large / big"},
+    {ns:"small", en:"small / little"},
+    {ns:"right", en:"right / correct"},
+    {ns:"wrong", en:"wrong / incorrect"},
+    {ns:"plain", en:"clear"},
+    {ns:"shortwise", en:"simple"},
+    {ns:"canthink", en:"possible"},
+    {ns:"factful", en:"real / genuine"},
+    {ns:"guarded", en:"safe"},
+    {ns:"forceful", en:"strong"}
   ];
 
   const PREFIXES = [
@@ -112,7 +197,7 @@ window.NewspeakDictionary = (() => {
     {ns:"er", format:root => englishInflection(root, "er") + " (comparative/agent)"},
     {ns:"ed", format:root => englishInflection(root, "ed") + " (past tense)"},
     {ns:"es", format:root => root + "s (plural)"},
-    {ns:"s", format:root => root + "s (plural)"}
+    {ns:"s", format:root => englishInflection(root, "s") + " (plural)"}
   ].sort((left, right) => right.ns.length - left.ns.length);
 
   const INTENSIFIER_PREFIX = {very:"plus", extremely:"doubleplus", not:"un"};
@@ -146,7 +231,9 @@ window.NewspeakDictionary = (() => {
     "us","my","your","our","their","from","by","into","over","under","about","who","whom",
     "which","what","when","where","why","how","if","than","then","there","here","is","am",
     "are","was","were","be","being","been","do","does","did","have","has","had","can","could",
-    "will","would","shall","should","may","might","must","not"
+    "will","would","shall","should","may","might","must","not",
+    "because","through","during","until","between","around","across",
+    "against","among","within","without","while","although","since"
   ]);
 
   const IRREGULAR_NOUNS = [
@@ -214,7 +301,10 @@ window.NewspeakDictionary = (() => {
       newspeakKeys.forEach(key => {
         if (!Object.hasOwn(newspeak, key)) newspeak[key] = primaryGloss;
       });
-      const glosses = entry.en.split(/[;/]/).map(value => value.trim().toLowerCase()).filter(Boolean);
+      const glosses = entry.en.split(";").flatMap(clause => {
+        if (/^\s*(?:not|no|never)\b/i.test(clause)) return [];
+        return clause.split("/").map(value => value.trim().toLowerCase()).filter(Boolean);
+      });
       glosses.forEach(gloss => {
         if (gloss.split(/\s+/).length <= 5 && !Object.hasOwn(english, gloss)) english[gloss] = newspeakForms[0];
       });
@@ -226,6 +316,22 @@ window.NewspeakDictionary = (() => {
   }
 
   const indices = buildIndices();
+  IRREGULARS.forEach(([englishPast, englishRoot, legacyNewspeakForm]) => {
+    const newspeakRoot = indices.english[englishRoot] || englishRoot;
+    const newspeakPast = englishInflection(newspeakRoot, "ed");
+    delete IRREG_NS2EN[legacyNewspeakForm];
+    IRREG_EN2NS[englishRoot] = newspeakRoot;
+    IRREG_EN2NS[englishPast] = newspeakPast;
+    IRREG_NS2EN[newspeakPast] = englishPast;
+  });
+
+  IRREGULAR_NOUNS.forEach(([englishRoot, englishPlural]) => {
+    const newspeakRoot = indices.english[englishRoot] || englishRoot;
+    const newspeakPlural = englishInflection(newspeakRoot, "s");
+    IRREG_PLURAL_EN2NS[englishPlural] = newspeakPlural;
+    IRREG_PLURAL_NS2EN[newspeakPlural] = englishPlural;
+  });
+
   return {
     ENTRIES, PREFIXES, SUFFIXES, INTENSIFIER_PREFIX, IRREG_EN2NS, IRREG_NS2EN,
     STOPWORDS, IRREG_PLURAL_EN2NS, IRREG_PLURAL_NS2EN, ANTONYM_EN2NS,

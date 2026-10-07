@@ -39,6 +39,7 @@ window.NewspeakTranslator = (() => {
 
   function englishRootCandidates(stem, suffix) {
     const candidates = [stem];
+    if (suffix === "ies") candidates.push(stem + "y");
     if (["ing", "ed", "er", "est"].includes(suffix)) {
       if (/([b-df-hj-np-tv-z])\1$/i.test(stem)) candidates.push(stem.slice(0, -1));
       if (/i$/i.test(stem)) candidates.push(stem.slice(0, -1) + "y");
@@ -49,6 +50,7 @@ window.NewspeakTranslator = (() => {
   }
 
   function inflectedNewspeak(root, suffix, englishStem, candidateRoot) {
+    if (suffix === "ies") return root + "s";
     if (suffix === "ing" && candidateRoot !== englishStem && root === candidateRoot) {
       const match = englishStem.match(/([b-df-hj-np-tv-z])\1$/i);
       if (match && root.endsWith(match[1])) return root + match[1] + suffix;
@@ -70,7 +72,7 @@ window.NewspeakTranslator = (() => {
       if (inner !== null) return inner + "wise";
     }
 
-    for (const suffix of ["ing", "est", "ed", "er", "es", "s"]) {
+    for (const suffix of ["ing", "est", "ed", "er", "ies", "es", "s"]) {
       if (!lower.endsWith(suffix) || lower.length <= suffix.length) continue;
       const englishStem = lower.slice(0, -suffix.length);
       for (const candidateRoot of englishRootCandidates(englishStem, suffix)) {
@@ -106,6 +108,17 @@ window.NewspeakTranslator = (() => {
     return enWordToNs(predicate) !== null;
   }
 
+  function preserveCase(source, translated) {
+    const letters = source.match(/\p{L}/gu) || [];
+    if (letters.length && letters.every(letter => letter === letter.toLocaleUpperCase())) {
+      return translated.toLocaleUpperCase();
+    }
+    if (/^\p{Lu}[\p{Ll}\p{M}]*$/u.test(source)) {
+      return translated[0].toLocaleUpperCase() + translated.slice(1);
+    }
+    return translated;
+  }
+
   function translate(raw, direction) {
     if (!raw.trim()) return {text: "NO INPUT RECEIVED.", unresolved: []};
     const tokens = raw.match(/[\p{L}\p{M}]+|\s+|[^\p{L}\p{M}\s]/gu) || [];
@@ -126,7 +139,7 @@ window.NewspeakTranslator = (() => {
         for (let span = 4; span >= 2; span--) {
           const phrase = tokens.slice(index, index + span * 2 - 1).join("").trim().toLowerCase().replace(/\s+/g, " ");
           if (EN_INDEX[phrase]) {
-            output.push(EN_INDEX[phrase]);
+            output.push(preserveCase(tokens.slice(index, index + span * 2 - 1).join(""), EN_INDEX[phrase]));
             index += span * 2 - 2;
             matchedPhrase = true;
             break;
@@ -181,7 +194,7 @@ window.NewspeakTranslator = (() => {
 
         const translated = enWordToNs(token);
         if (translated !== null) {
-          output.push(translated);
+          output.push(preserveCase(token, translated));
         } else {
           output.push(token);
           if (!STOPWORDS.has(lower)) unresolved.push(token);
@@ -199,7 +212,7 @@ window.NewspeakTranslator = (() => {
     const output = tokens.map(token => {
       if (!isWord(token)) return token;
       const translated = nsWordToEn(token);
-      if (translated !== null) return translated;
+      if (translated !== null) return preserveCase(token, translated);
       if (!STOPWORDS.has(token.toLowerCase())) unresolved.push(token);
       return token;
     });
