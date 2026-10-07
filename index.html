@@ -185,7 +185,7 @@
   <!-- TRANSLATOR TAB -->
   <div id="tab-translate" class="section hidden">
     <h2>Sentence Translator</h2>
-    <p class="small">Choose a direction, then enter text. Translation is word-by-word from the reference and may need manual adjustment, as the Party intended.</p>
+    <p class="small">Choose a direction, then enter text. The engine reads straight from the dictionary above plus the affix rules below (plus-, un-, -wise, plural -s, etc.) &mdash; add a word to the dictionary and it works here automatically. Unresolved words are left in place and listed below the output.</p>
     <select id="transdir">
       <option value="toNS">English -&gt; Newspeak</option>
       <option value="toEN">Newspeak -&gt; English</option>
@@ -297,35 +297,80 @@ const ENTRIES = [
   {ns:"carewise", en:"carefully"}
 ];
 
-// English-side entries from the "Common Transformations" section
-const TRANSFORMS = [
-  ["very good","plusgood"],["extremely good","doubleplusgood"],["great","plusgood"],
-  ["excellent","doubleplusgood"],["bad","ungood"],["very bad","plusungood"],
-  ["terrible","doubleplusungood"],["horrible","doubleplusungood"],["before","ante"],
-  ["after","post"],["completely","fullwise"],["totally","fullwise"],["fully","fullwise"],
-  ["correctly","goodwise"],["properly","goodwise"],["quickly","speedwise"],
-  ["slowly","unspeedwise"],["carefully","carewise"],["faster","speedfuler"],
-  ["fastest","speedfulest"],["thoughtcrime","crimethink"],
-  ["politically correct thought","goodthink"],["pre-Party ideas","oldthink"],
-  ["English Socialism","Ingsoc"],["labor camp","joycamp"],["working-class entertainment","prolefeed"],
-  ["surveillance TV","telescreen"],["Thought Police","thinkpol"],
-  ["submit to higher authority","upsub"],["refer to","ref"],["department","dep"],
-  ["sector","sec"],["artificial insemination","artsem"],["person erased from history","unperson"],
-  ["Ministry of Truth","Minitrue"],["Ministry of Love","Miniluv"],["Ministry of Peace","Minipax"],
-  ["Ministry of Plenty","Miniplenty"],["Records Department","Recdep"],
-  ["Fiction Department","Ficdep"],["Telecommunications Department","Teledep"],
-  ["freedom","free (only as absence, e.g. 'free of weeds')"],
-  ["equality","equal (quantity only; no political equal rights)"],
-  ["privacy","[no equivalent: concept removed]"],
-  ["independent thought","oldthink / ownlife / crimethink (context)"],
-  ["critical thinking","crimestop / crimethinkful (context)"],
-  ["whom","who"],["shall","will"],["should","would"],
-  ["better","gooder"],["best","goodest"],["thought","thinked"],
-  ["gave","gived"],["brought","bringed"],["spoke","speaked"],["took","taked"],
-  ["swam","swimmed"],["think","thinked (past) / thinking"],["run","runned"],
-  ["drink","drinked"],["steal","stealed"],["very","plus-"],["not","un-"],
-  ["good","good"],["better","gooder"],["very","plus-"],["extremely","doubleplus-"], ["english","oldspeak"]
+// ---------- TRANSLATION ENGINE ----------
+// The translator is driven entirely by ENTRIES (above) plus the small grammar
+// tables below. Nothing about any individual word, phrase, or plural is
+// hardcoded here: add a row to ENTRIES and both the Lookup tab and the
+// Translator pick it up automatically, in both directions.
+
+// Productive prefixes, longest-ns-first so "doubleplus" is tried before "plus".
+const PREFIXES = [
+  {ns:"doubleplus", en:"extremely"},
+  {ns:"plus",        en:"very"},
+  {ns:"un",          en:"not"},
+  {ns:"ante",        en:"before"},
+  {ns:"post",        en:"after"},
+  {ns:"old",         en:"old / pre-Party"},
+  {ns:"mal",         en:"wrongly / falsely"},
+  {ns:"good",        en:"approved / orthodox"},
+  {ns:"crime",       en:"forbidden / unorthodox"},
+  {ns:"up",          en:"upward"},
+  {ns:"down",        en:"downward"}
+].sort((a,b) => b.ns.length - a.ns.length);
+
+// Productive suffixes, longest-ns-first. `format` builds the English gloss
+// for Newspeak->English; `apply` builds the Newspeak form for English->Newspeak.
+const SUFFIXES = [
+  {ns:"wise", format:r => r + " (adverb)",            apply:r => r + "wise"},
+  {ns:"ful",  format:r => r + " (adjective)",          apply:r => r + "ful"},
+  {ns:"est",  format:r => r + "est (superlative)",     apply:r => r + "est"},
+  {ns:"ing",  format:r => r + "ing (ongoing)",         apply:r => r + "ing"},
+  {ns:"er",   format:r => r + "er (comparative/agent)",apply:r => r + "er"},
+  {ns:"ed",   format:r => r + "ed (past tense)",       apply:r => r + "ed"},
+  {ns:"es",   format:r => r + "s (plural)",            apply:r => r + "es"},
+  {ns:"s",    format:r => r + "s (plural)",            apply:r => r + "s"}
+].sort((a,b) => b.ns.length - a.ns.length);
+
+// English intensifiers that act as true grammatical prefixes rather than
+// dictionary words in their own right (e.g. "very good" -> plus+good).
+const INTENSIFIER_PREFIX = { "very":"plus", "extremely":"doubleplus", "not":"un" };
+
+// Irregular verbs, taken straight from the dictionary's grammar section
+// (Newspeak regularizes them). Add a row here to teach the engine another one.
+const IRREGULARS = [
+  ["thought","think","thinked"], ["gave","give","gived"], ["brought","bring","bringed"],
+  ["spoke","speak","speaked"],   ["took","take","taked"], ["swam","swim","swimmed"],
+  ["stole","steal","stealed"],   ["ran","run","runned"],  ["drank","drink","drinked"]
 ];
+const IRREG_EN2NS = {}, IRREG_NS2EN = {};
+IRREGULARS.forEach(([enPast, enRoot, nsForm]) => {
+  IRREG_EN2NS[enPast] = nsForm;
+  IRREG_NS2EN[nsForm] = enPast;
+});
+
+// Common function words that are expected to stay as plain Oldspeak and
+// shouldn't clutter the "unresolved" notice.
+const STOPWORDS = new Set(["a","an","the","is","was","are","were","be","to","of","in","on","at",
+  "it","he","she","they","that","this","and","or","but","for","with","as","his","her","its"]);
+
+// Built from ENTRIES on load. NS_INDEX: newspeak word -> primary English gloss.
+// EN_INDEX: an English word/phrase -> newspeak word (built by splitting each
+// gloss on ";" and "/" so every synonym listed in ENTRIES becomes searchable).
+let NS_INDEX = {}, EN_INDEX = {};
+function buildIndices(){
+  NS_INDEX = {}; EN_INDEX = {};
+  ENTRIES.forEach(e => {
+    const nsKeys = e.ns.split("/").map(s=>s.trim().toLowerCase()).filter(Boolean);
+    const primaryGloss = e.en.split(/[;]/)[0].split("/")[0].trim();
+    nsKeys.forEach(k => { if(!NS_INDEX[k]) NS_INDEX[k] = primaryGloss; });
+    const glossParts = e.en.split(/[;/]/).map(s=>s.trim().toLowerCase()).filter(Boolean);
+    const primaryNs = nsKeys[0];
+    glossParts.forEach(g => {
+      // skip overly long descriptive clauses, keep short word/phrase synonyms
+      if(g.split(" ").length <= 5 && !EN_INDEX[g]) EN_INDEX[g] = primaryNs;
+    });
+  });
+}
 
 // Word-formation rules
 const RULES = [
@@ -346,12 +391,6 @@ const RULES = [
   ["-s / -es", "Regular plural.", "man -> mans; ox -> oxes; life -> lifes"],
   ["-wise", "Forms an adverb.", "quick -> quickwise; careful -> carewise"]
 ];
-
-const CONTRACTIONS = {
-  "minitrue":"Ministry of Truth","miniluv":"Ministry of Love","minipax":"Ministry of Peace",
-  "miniplenty":"Ministry of Plenty","recdep":"Records Department","ficdep":"Fiction Department",
-  "teledep":"Telecommunications Department","thinkpol":"Thought Police","thoughtpolice":"Thought Police"
-};
 
 // ---------- TABS ----------
 function showTab(name) {
@@ -423,56 +462,137 @@ function ruleHint(q){
 }
 
 // ---------- TRANSLATOR ----------
+
+// Newspeak -> English, recursive affix decomposition. Returns null if the
+// word (or any decomposable part of it) isn't resolvable.
+function nsWordToEn(word, depth){
+  depth = depth || 0;
+  const lw = word.toLowerCase();
+  if(IRREG_NS2EN[lw]) return IRREG_NS2EN[lw];
+  if(NS_INDEX[lw]) return NS_INDEX[lw];
+  if(depth >= 4) return null;
+  for(const p of PREFIXES){
+    if(lw.startsWith(p.ns) && lw.length > p.ns.length){
+      const inner = nsWordToEn(lw.slice(p.ns.length), depth+1);
+      if(inner !== null) return p.en + " " + inner;
+    }
+  }
+  for(const s of SUFFIXES){
+    if(lw.endsWith(s.ns) && lw.length > s.ns.length){
+      const root = lw.slice(0, -s.ns.length);
+      const inner = nsWordToEn(root, depth+1);
+      if(inner !== null) return s.format(inner);
+    }
+  }
+  return null;
+}
+
+// English -> Newspeak, recursive affix decomposition (mirrors nsWordToEn).
+function enWordToNs(word, depth){
+  depth = depth || 0;
+  const lw = word.toLowerCase();
+  if(IRREG_EN2NS[lw]) return IRREG_EN2NS[lw];
+  if(EN_INDEX[lw]) return EN_INDEX[lw];
+  if(depth >= 4) return null;
+  if(lw.endsWith("ly") && lw.length > 2){
+    const inner = enWordToNs(lw.slice(0,-2), depth+1);
+    if(inner !== null) return inner + "wise";
+  }
+  if(lw.endsWith("ing") && lw.length > 3){
+    const inner = enWordToNs(lw.slice(0,-3), depth+1);
+    if(inner !== null) return inner + "ing";
+  }
+  if(lw.endsWith("est") && lw.length > 3){
+    const inner = enWordToNs(lw.slice(0,-3), depth+1);
+    if(inner !== null) return inner + "est";
+  }
+  if(lw.endsWith("ed") && lw.length > 2){
+    const inner = enWordToNs(lw.slice(0,-2), depth+1);
+    if(inner !== null) return inner + "ed";
+  }
+  if(lw.endsWith("er") && lw.length > 2){
+    const inner = enWordToNs(lw.slice(0,-2), depth+1);
+    if(inner !== null) return inner + "er";
+  }
+  if(lw.endsWith("es") && lw.length > 2){
+    const inner = enWordToNs(lw.slice(0,-2), depth+1);
+    if(inner !== null) return inner + "es";
+  }
+  if(lw.endsWith("s") && lw.length > 1){
+    const inner = enWordToNs(lw.slice(0,-1), depth+1);
+    if(inner !== null) return inner + "s";
+  }
+  return null;
+}
+
 function doTranslate(){
   const dir = document.getElementById("transdir").value;
   const raw = document.getElementById("transinput").value;
   const out = document.getElementById("output");
   if(!raw.trim()){ out.textContent = "NO INPUT RECEIVED."; return; }
 
+  const tokens = raw.split(/(\s+|[.,!?;:"'()])/).filter(t => t !== "");
+  const isWord = t => /^[A-Za-z]+$/.test(t);
+  const unresolved = [];
+
   if(dir === "toNS"){
-    let text = raw;
-    // Apply multi-word transformations, longest first, case-insensitive
-    const pairs = TRANSFORMS.filter(p=>!p[1].includes("(") && !p[1].includes("[")).sort((a,b)=>b[0].length-a[0].length);
-    const flagged = [];
-    pairs.forEach(([en, ns]) => {
-      const re = new RegExp("\\b" + en.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "\\b", "gi");
-      text = text.replace(re, ns);
-    });
-    // Flag concepts that have no direct equivalent
-    TRANSFORMS.filter(p=>p[1].includes("(")||p[1].includes("[")).forEach(([en,ns])=>{
-      const re = new RegExp("\\b"+en+"\\b","i");
-      if(re.test(raw)) flagged.push('"'+en+'" -> '+ns);
-    });
-    let result = text;
-    if(flagged.length) result += "\n\n[NOTICE] Concept(s) requiring paraphrase:\n" + flagged.join("\n");
-    result += "\n\n[Note: word-by-word output. Adjust for Newspeak grammar as needed.]";
+    const outTokens = [];
+    for(let i=0; i<tokens.length; i++){
+      const t = tokens[i];
+      if(!isWord(t)){ outTokens.push(t); continue; }
+      const lw = t.toLowerCase();
+
+      // Greedy multi-word phrase match (up to 4 words) against EN_INDEX,
+      // so any multi-word gloss in ENTRIES (e.g. "ministry of truth") works
+      // without a separate hardcoded phrase table.
+      let matched = false;
+      for(let span = 4; span >= 2; span--){
+        const windowTokens = tokens.slice(i, i + span*2 - 1); // words+spaces
+        const phrase = windowTokens.join("").trim().toLowerCase();
+        if(EN_INDEX[phrase]){
+          outTokens.push(EN_INDEX[phrase]);
+          i += span*2 - 2;
+          matched = true;
+          break;
+        }
+      }
+      if(matched) continue;
+
+      // Grammatical intensifier prefix: "very X" / "extremely X" / "not X"
+      if(INTENSIFIER_PREFIX[lw] && tokens[i+2] && isWord(tokens[i+2])){
+        const nextWord = tokens[i+2];
+        const innerResult = enWordToNs(nextWord);
+        outTokens.push(INTENSIFIER_PREFIX[lw] + (innerResult || nextWord.toLowerCase()));
+        if(innerResult === null && !STOPWORDS.has(nextWord.toLowerCase())) unresolved.push(nextWord);
+        i += 2; // consumes this word, the space, and the next word
+        continue;
+      }
+
+      const result = enWordToNs(t);
+      if(result !== null){
+        outTokens.push(result);
+      } else {
+        outTokens.push(t);
+        if(!STOPWORDS.has(lw)) unresolved.push(t);
+      }
+    }
+    let result = outTokens.join("");
+    if(unresolved.length) result += "\n\n[UNRESOLVED - left as Oldspeak] " + [...new Set(unresolved)].join(", ");
+    result += "\n\n[Note: word-by-word output from the reference. Adjust for Newspeak grammar as needed.]";
     out.textContent = result;
   } else {
-    let words = raw.split(/(\s+|[.,!?;:"'()])/);
-    const translated = words.map(w => {
-      const lw = w.toLowerCase();
-      if(/^\s+$|^[.,!?;:"'()]$/.test(w) || w==="") return w;
-      if(CONTRACTIONS[lw]) return CONTRACTIONS[lw];
-      const exact = ENTRIES.find(e => e.ns.toLowerCase()===lw);
-      if(exact) return exact.en;
-      // Affix decomposition
-      if(lw.startsWith("doubleplus") && lw.length>10) return "extremely " + translateStem(lw.slice(10));
-      if(lw.startsWith("plus") && lw.length>4) return "very " + translateStem(lw.slice(4));
-      if(lw.startsWith("un") && lw.length>3) return "not " + translateStem(lw.slice(2));
-      if(lw.startsWith("ante") && lw.length>4) return "before " + translateStem(lw.slice(4));
-      if(lw.startsWith("post") && lw.length>4) return "after " + translateStem(lw.slice(4));
-      if(lw.endsWith("wise") && lw.length>4) return translateStem(lw.slice(0,-4)) + " (adverb)";
-      return w;
+    const outTokens = tokens.map(t => {
+      if(!isWord(t)) return t;
+      const result = nsWordToEn(t);
+      if(result !== null) return result;
+      if(!STOPWORDS.has(t.toLowerCase())) unresolved.push(t);
+      return t;
     });
-    out.textContent = translated.join("") + "\n\n[Note: unrecognized terms are left untouched. Context restores meaning.]";
+    let result = outTokens.join("");
+    if(unresolved.length) result += "\n\n[UNRESOLVED - left as Newspeak] " + [...new Set(unresolved)].join(", ");
+    result += "\n\n[Note: unrecognized terms are left untouched. Context restores meaning.]";
+    out.textContent = result;
   }
-}
-
-function translateStem(s){
-  const hit = ENTRIES.find(e=>e.ns.toLowerCase()===s);
-  if(hit) return hit.en;
-  const g = {good:"good", ungood:"bad", think:"thinking", speed:"speed", goodthink:"orthodox thought", crime:"crime"};
-  return g[s] || s;
 }
 
 // ---------- RULES RENDER ----------
@@ -488,6 +608,7 @@ function renderRules(){
 
 // ---------- INIT ----------
 window.onload = function(){
+  buildIndices();
   runSearch();
   renderRules();
 };
