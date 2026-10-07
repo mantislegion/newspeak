@@ -1,0 +1,175 @@
+body {
+  font-family: "Courier New", Courier, monospace;
+  background: #d9d2b8;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 0;
+}
+#topbar {
+  background: #8b0000;
+  color: #f4e9c1;
+  text-align: center;
+  padding: 6px;
+  font-weight: bold;
+  border-bottom: 3px double #000;
+  letter-spacing: 2px;
+}
+#wrap {
+  width: 760px;
+  max-width: 96%;
+  margin: 16px auto;
+  background: #efe6c8;
+  border: 3px outset #6b5d3a;
+  padding: 0;
+}
+#header {
+  background: #1a1a1a;
+  color: #f4e9c1;
+  padding: 14px;
+  text-align: center;
+  border-bottom: 2px solid #8b0000;
+}
+#header h1 {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 30px;
+  margin: 0;
+  letter-spacing: 4px;
+}
+#header p {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+}
+#header #slogan {
+  font-family: "Times New Roman", Times, serif;
+  font-style: italic;
+  font-weight: bold;
+  color: #ff6b6b;
+  font-size: 16px;
+  margin-top: 8px;
+}
+.section {
+  padding: 14px 18px;
+  border-bottom: 1px dashed #6b5d3a;
+}
+h2 {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 18px;
+  border-bottom: 2px solid #8b0000;
+  margin: 0 0 10px 0;
+  padding-bottom: 3px;
+  color: #8b0000;
+  text-transform: uppercase;
+}
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.nav button {
+  color: #00004d;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: underline;
+  margin: 0;
+}
+.nav button.active {
+  color: #8b0000;
+  text-decoration: none;
+}
+input[type="text"], select, textarea {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  background: #fbf6e2;
+  border: 2px inset #6b5d3a;
+  padding: 4px;
+  box-sizing: border-box;
+}
+#searchbox { width: 70%; }
+#direction { width: 26%; }
+textarea { width: 100%; height: 90px; }
+.section button {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: bold;
+  background: #c9bd94;
+  border: 2px outset #6b5d3a;
+  padding: 4px 12px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+button:active { border-style: inset; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid #00004d;
+  outline-offset: 2px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fbf6e2;
+}
+th, td {
+  border: 1px solid #6b5d3a;
+  padding: 5px 7px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: #1a1a1a;
+  color: #f4e9c1;
+}
+.nsword {
+  font-weight: bold;
+  color: #8b0000;
+}
+.hl { background: #ffe066; }
+#resultcount, .small { font-size: 12px; color: #444; }
+#output {
+  background: #fbf6e2;
+  border: 2px inset #6b5d3a;
+  padding: 10px;
+  min-height: 40px;
+  margin-top: 10px;
+  white-space: pre-wrap;
+  font-size: 14px;
+}
+#unresolved-words {
+  margin-top: 10px;
+}
+#unresolved-words p {
+  margin: 0 0 4px;
+}
+#unresolved-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#unresolved-list button {
+  margin: 0;
+}
+#copy-status {
+  min-height: 1em;
+  margin-top: 6px;
+}
+.rule {
+  margin: 6px 0;
+  font-size: 13px;
+}
+.rule b { color: #8b0000; }
+.blink { color: #8b0000; font-weight: bold; }
+#footer {
+  text-align: center;
+  font-size: 11px;
+  padding: 10px;
+  background: #1a1a1a;
+  color: #aaa;
+}
+.hidden { display: none; }
+
+@media (max-width: 560px) {
+  #wrap { max-width: 100%; margin: 0 auto; border-left: 0; border-right: 0; }
+  #header h1 { font-size: 24px; }
+  .section { padding: 12px; }
+  #searchbox, #direction { width: 100%; margin-bottom: 8px; }
+  table { font-size: 12px; }
+  th, td { padding: 4px; overflow-wrap: anywhere; }
+}
