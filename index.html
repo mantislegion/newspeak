@@ -350,8 +350,46 @@ IRREGULARS.forEach(([enPast, enRoot, nsForm]) => {
 
 // Common function words that are expected to stay as plain Oldspeak and
 // shouldn't clutter the "unresolved" notice.
-const STOPWORDS = new Set(["a","an","the","is","was","are","were","be","to","of","in","on","at",
+const STOPWORDS = new Set(["a","an","the","to","of","in","on","at",
   "it","he","she","they","that","this","and","or","but","for","with","as","his","her","its"]);
+
+// Newspeak regularizes irregular English plurals: the Party keeps the
+// singular root and just bolts the regular -s/-es suffix on, same as it
+// regularizes irregular verbs above. [singularRoot, irregularEnglishPlural, suffix]
+const IRREGULAR_NOUNS = [
+  ["man","men","s"], ["woman","women","s"], ["child","children","s"],
+  ["foot","feet","s"], ["tooth","teeth","s"], ["goose","geese","s"],
+  ["mouse","mice","s"], ["ox","oxen","es"], ["sheep","sheep","s"],
+  ["person","people","s"], ["die","dice","s"], ["louse","lice","s"]
+];
+const IRREG_PLURAL_EN2NS = {}, IRREG_PLURAL_NS2EN = {};
+IRREGULAR_NOUNS.forEach(([root, irregularPlural, suffix]) => {
+  const nsPlural = root + suffix;
+  IRREG_PLURAL_EN2NS[irregularPlural] = nsPlural;
+  IRREG_PLURAL_NS2EN[nsPlural] = irregularPlural;
+});
+
+// Newspeak eliminates opposite-word pairs in favor of un- + the positive
+// root (this is why "bad" itself survives only as "ungood" in spirit, and
+// the dictionary already treats "ungood" as the real word for "bad").
+// [negativeEnglishWord, positiveRoot] -> nsForm is just "un"+positiveRoot.
+const ANTONYM_PAIRS = [
+  ["hate","love"], ["enemy","friend"], ["dark","light"], ["weak","strong"],
+  ["ugly","beautiful"], ["sad","glad"], ["stupid","smart"], ["coward","brave"],
+  ["war","peace"]
+];
+const ANTONYM_EN2NS = {}, ANTONYM_NS2EN = {};
+ANTONYM_PAIRS.forEach(([neg, posRoot]) => {
+  const nsForm = "un" + posRoot;
+  ANTONYM_EN2NS[neg] = nsForm;
+  ANTONYM_NS2EN[nsForm] = neg;
+});
+
+// "To be" drops out entirely before a Newspeak predicate: "X is bad" becomes
+// just "X ungood", not "X is ungood". Dropped only on the English->Newspeak
+// side; nothing to restore when going the other way, since Newspeak never
+// had the copula to begin with.
+const COPULAS = new Set(["is","am","are","was","were","be","being","been"]);
 
 // Built from ENTRIES on load. NS_INDEX: newspeak word -> primary English gloss.
 // EN_INDEX: an English word/phrase -> newspeak word (built by splitting each
@@ -469,6 +507,8 @@ function nsWordToEn(word, depth){
   depth = depth || 0;
   const lw = word.toLowerCase();
   if(IRREG_NS2EN[lw]) return IRREG_NS2EN[lw];
+  if(ANTONYM_NS2EN[lw]) return ANTONYM_NS2EN[lw];
+  if(IRREG_PLURAL_NS2EN[lw]) return IRREG_PLURAL_NS2EN[lw];
   if(NS_INDEX[lw]) return NS_INDEX[lw];
   if(depth >= 4) return null;
   for(const p of PREFIXES){
@@ -492,6 +532,8 @@ function enWordToNs(word, depth){
   depth = depth || 0;
   const lw = word.toLowerCase();
   if(IRREG_EN2NS[lw]) return IRREG_EN2NS[lw];
+  if(ANTONYM_EN2NS[lw]) return ANTONYM_EN2NS[lw];
+  if(IRREG_PLURAL_EN2NS[lw]) return IRREG_PLURAL_EN2NS[lw];
   if(EN_INDEX[lw]) return EN_INDEX[lw];
   if(depth >= 4) return null;
   if(lw.endsWith("ly") && lw.length > 2){
@@ -557,6 +599,13 @@ function doTranslate(){
         }
       }
       if(matched) continue;
+
+      // Newspeak drops "to be" before a predicate entirely: "is bad" -> "ungood",
+      // not "is ungood". Swallow the copula and the space that follows it.
+      if(COPULAS.has(lw)){
+        i += 1; // also consumes the trailing space/punctuation token
+        continue;
+      }
 
       // Grammatical intensifier prefix: "very X" / "extremely X" / "not X"
       if(INTENSIFIER_PREFIX[lw] && tokens[i+2] && isWord(tokens[i+2])){
